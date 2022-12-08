@@ -60,7 +60,7 @@ class Filesystem(object):
         if target == "..":
             self.current = self.current.parent
         elif target == "/":
-            pass
+            self.current = self.root
         else:
             for c in self.current.contents:
                 if c.name == target:
