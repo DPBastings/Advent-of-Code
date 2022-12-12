@@ -1,137 +1,149 @@
-"""Written in Python 2.7.16."""
+"""Written in Python 3.9.2."""
 
-class Point(object):
-    is_pos = False
-    is_goal = False
-    path = '.'
+from copy import copy
 
+class Point():
     def __init__(self, field, x, y, z):
-        #super(object, self).__init__()
         self.field = field
         self.x = x
-        self.z = z
         if y == 'S':
-            self.is_pos = True
-            self.y = 'a'
+            self.y = 0
         elif y == 'E':
-            self.is_goal = True
-            self.path = 'E'
-            self.y = 'z'
+            self.y = 25
         else:
-            self.y = y
-
+            self.y = ord(y) - 97
+        self.z = z
+    
     def __repr__(self):
-        return "(X:{0}, Y:{1}, Z:{2})".format(self.x, self.y, self.z)
+        return f"(X:{self.x}, Y:{self.y} ({self.ychar()}), Z:{self.z})"
     
-    def __str__(self):
-        if self.is_pos:
-            return 'S'
-        if self.is_goal:
-            return 'E'
-        return str(self.y)
+    def ychar(self):
+        return chr(self.y + 97)
     
-    def adjoining(self):
-        tmp = []
-        res = []
-        if self.x > 0:
-            tmp.append(self.field.row(self.z)[self.x-1])
-        try:
-            tmp.append(self.field.row(self.z)[self.x+1])
-        except IndexError:
-            pass
-        if self.z > 0:
-            tmp.append(self.field.col(self.x)[self.z-1])
-        try:
-            tmp.append(self.field.col(self.x)[self.z+1])
-        except IndexError:
-            pass
-        for p in tmp:
-            if ord(p.y) <= ord(self.y) + 1:
-                res.append(p)
-        return res
+    def adjoins(self, point, inverse=False):
+        if self in point.adjoining(inverse):
+            return "X"
+        if point is self:
+            return "@"
+        return "."
+    
+    def adjoining(self, inverted=False):
+        res = Field()
+        res.append(self.field.point(self.x+1, self.z))
+        res.append(self.field.point(self.x-1, self.z))
+        res.append(self.field.point(self.x, self.z+1))
+        res.append(self.field.point(self.x, self.z-1))
+        if inverted:
+            return [p for p in res if p.y >= self.y - 1]
+        return [p for p in res if p.y <= self.y + 1]
 
 class Field(list):
-    def __init__(self, data):
-        super(list, self).__init__()
-        for z, r in enumerate(data):
-            self.append([Point(self, x, y, z) for x, y in enumerate(list(r))])
-
-    def row(self, x):
-        return self[x]
+    def __init__(self):
+        super().__init__()
+        self.start = None
+        self.goal = None
     
-    def col(self, z):
-        return [r[z] for r in self]
+    def append(self, object, /):
+        if object is None:
+            pass
+        else:
+            super().append(object)
     
-    def points(self):
-        return (p for r in self for p in r)
-    
-    def start(self):
-        for p in self.points():
-            return p
-    
-    def goal(self):
-        for p in self.points():
-            if p.is_goal:
+    def point(self, x, z):
+        for p in self:
+            if p.x == x and p.z == z:
                 return p
-   
-    def view(self):
-        for r in self:
-            for p in r:
-                print str(p),
-            print ""
-
-    def view_path(self):
-        for r in self:
-            for p in r:
-                print p.path,
-            print ""
-
-    def path_reset(self):
-        for p in self.points():
-            if p.path != 'E':
-                p.path = '.'
+        return None
     
-
-class PathfindCheck(object):
-    def __init__(self, dist, prev=None):
-        self.dist = dist
-        self.prev = prev
-    def __repr__(self):
-        return "dist: {0}, prev: {1}".format(self.dist, self.prev.__repr__())
-
+    def row(self, z):
+        return [p for p in self if p.z == z]
+    
+    def col(self, x):
+        return [p for p in self if p.x == x]
+    
+    def view(self, attr="ychar", *args):
+        i = 0
+        row = self.row(i)
+        while row:
+            row.sort(key=lambda p: p.x)
+            for p in row:
+                print(f"[{getattr(p, attr)(*args)}]", end="")
+            print("")
+            i += 1
+            row = self.row(i)
 
 def dijkstra(field):
-    start = field.start()
-    unvisited = {p: PathfindCheck(9999999) for p in field.points()}
-    unvisited[start].dist = 0
-    visited = {}
-    while unvisited: 
-        path = []
-        tmp = unvisited.items()
-        tmp.sort(key=lambda p: p[1].dist)
-        checkpoint = tmp[0]
-        unvisited.pop(checkpoint[0])
-        print "Checking point {0}.".format(checkpoint)
-        if checkpoint[0] == field.goal():
-            return checkpoint[1].dist
-        current_len = checkpoint[1].dist + 1
-        for a in checkpoint[0].adjoining():
-            try:
-                if current_len < unvisited[a].dist:
-                    unvisited[a].dist = current_len
-                    unvisited[a].prev = checkpoint[0]
-                else:
-                    print "backtracking..."
-            except KeyError:
-                pass
-    print "No valid path was found."
+    path = []
+    for p in field:
+        setattr(p, "distance", 9999999)
+        setattr(p, "previous", None)
+    field.start.distance = 0
+    unvisited_points = copy(field)
+    while unvisited_points:
+        check = min(unvisited_points, key=lambda p: p.distance)
+        unvisited_points.remove(check)
+        if check is field.goal:
+            return get_path(check)
+        for a in check.adjoining():
+            alternative = check.distance + 1
+            if alternative < a.distance:
+                a.distance = alternative
+                a.previous = check
+    print("No valid path to goal was found.")
+    return -1
+    
+def dijkstra_reverse(field):
+    path = []
+    for p in field:
+        setattr(p, "distance", 9999999)
+        setattr(p, "previous", None)
+    field.goal.distance = 0
+    unvisited_points = copy(field)
+    while unvisited_points:
+        unvisited_points.sort(key=lambda p: p.distance)
+        check = unvisited_points.pop(0)
+        if check.y == 0:
+            return get_path(check)
+        for a in check.adjoining(inverted=True):
+            alternative = check.distance + 1
+            if alternative < a.distance:
+                a.distance = alternative
+                a.previous = check
+    print("No valid path to y=a(0) was found.")
     return -1
 
+def dijkstra_reset(field):
+    for p in field:
+        delattr(p, "distance")
+        delattr(p, "previous")
+
+def get_path(end):
+    path = []
+    while end.previous:
+        path.append(end)
+        end = end.previous
+    return path
+
+def parse(name):
+    field = Field()
+    with open(name, 'r') as f:
+        for z, r in enumerate(f.readlines()):
+            for x, y in enumerate(r.strip('\n')):
+                point = Point(field, x, y, z)
+                if y == 'S':
+                    field.start = point
+                elif y == 'E':
+                    field.goal = point
+                field.append(point)
+    return field
+
 def run():
-    with open(input("input: "), 'r') as f:
-        field = Field([l.strip('\n') for l in f.readlines()])
-    field.view()
+    field = parse(input("input: "))
+    field.view("ychar")
     path = dijkstra(field)
-    print path
-    #field.view_path()
-    #return field
+    print(path)
+    print(f"The shortest route to E is {len(path)} steps in length.")
+    dijkstra_reset(field)
+    path = dijkstra_reverse(field)
+    print(path)
+    print(f"The distance between E and the closest y=a point is {len(path)} steps.")
