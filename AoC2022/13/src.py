@@ -1,73 +1,65 @@
-"""Written in Python 2.7.16."""
+"""Written in Python 3.9.2."""
 
 import ast
-
-def _compare(a, b, depth=0):
-    indent = "  ".join(("" for _ in range(0, depth+1)))
-    if isinstance(a, int):
-        if isinstance(b, int):
-            if a < b:
-                print indent, "  - Left side is smaller: inputs are in the right order."
-                return True
-            if a > b:
-                print indent, "  - Left side is greater: inputs are in the wrong order."
-                return False
-            else: return None
-        else:
-            print indent, "- Mixed types: convert left."
-            conv = []
-            conv.append(a)
-            a = conv
-            compare(a, b, depth+1)
-    elif isinstance(a, list):
-        if isinstance(b, list):
-            for i, x in enumerate(a):
-                try:
-                    y = b[i]
-                except IndexError:
-                    print indent, "- Right side ran out of items."
-                    return False
-                comparison = compare(x, y)
-                if not comparison:
-                    continue
-                return comparison
-        elif isinstance(b, int):
-            print indent, "- Mixed types: convert right."
-            conv = []
-            conv.append(b)
-            b = conv
-            compare(a, b, depth+1)
-        print indent, "- Left side ran out of items."
-        return True
-    raise TypeError
+from itertools import zip_longest
 
 def compare(a, b, depth=0):
     indent = "  ".join(("" for _ in range(0, depth+1)))
-    print indent, "- Comparing {0} against {1}.".format(a, b)
+    print(indent, f"- Comparing {a} against {b}.")
+    if isinstance(a, int) and isinstance(b, int):
+        if a < b:
+            print(indent, "  - Left side is smaller.")
+            return 1
+        if a > b:
+            print(indent, "  - Left side is greater. Inputs are in the wrong order.")
+            return -1
+        else: return 0
+    for left, right in zip_longest(a, b):
+        if left == None:
+            print(indent, "- Left side ran out of items.")
+            return 0
+        if right == None:
+            print(indent, "- Right side ran out of items. Inputs are in the wrong order.")
+            return -1
+        if isinstance(left, list) and isinstance(right, int):
+            print(indent, "  - Mixed types: convert right.")
+            right = [right]
+        if isinstance(right, list) and isinstance(left, int):
+            print(indent, "  - Mixed types: convert left.")
+            left = [left]
+        result = compare(left, right, depth=depth+1)
+        if result == 0:
+            continue
+        return result
+    return 0
+
+def _compare(a, b, depth=0):
+    indent = "  ".join(("" for _ in range(0, depth+1)))
+    print(indent, f"- Comparing {a} against {b}.")
     try:
         for i, x in enumerate(a):
             try: y = b[i]
             except IndexError:
-                print indent, "- Right side ran out of items. Inputs are in the wrong order."
+                print(indent, "- Right side ran out of items. Inputs are in the wrong order.")
                 return False
             if isinstance(x, list) and isinstance(y, int):
-                print indent, "  - Mixed types: convert right."
+                print(indent, "  - Mixed types: convert right.")
                 y = [y]
             if isinstance(x, int) and isinstance(y, list):
-                print indent, "  - Mixed types: convert left."
+                print(indent, "  - Mixed types: convert left.")
                 x = [x]
             comparison = compare(x, y, depth+1)
             if comparison == -1:
                 continue
             return comparison
-        print indent, "- Left side ran out of items."
+        print(indent, "- Left side ran out of items.")
         return -1
     except TypeError:
         if a < b:
-            print indent, "  - Left side is smaller.",
+            print(indent, "  - Left side is smaller.", end="")
             return True
         elif a > b:
-            print indent, "  - Left side is greater. Inputs are in the wrong order."
+            print(indent, "  - Left side is greater. Inputs are in the wrong order.")
             return False
         else:
             return -1
@@ -86,8 +78,9 @@ def run():
     with open(input("input: "), 'r') as f:
         pairs = parse(f.readlines())
     for n, p in enumerate(pairs, 1):
-        print "== Pair {0} ==".format(n)
-        if compare(*p):
-            print "Inputs are in the right order."
+        print(f"== Pair {n} ==")
+        result = compare(*p)
+        if result > -1:
+            print("Inputs are in the right order.")
             res.append(n)
-    print res, sum(res)
+    print(res, sum(res))
