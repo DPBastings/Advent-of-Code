@@ -2,17 +2,18 @@ NAME 		:= bin
 
 SRC_FILES	:= main.cpp\
 			parse.cpp\
-			Card.cpp
+			Range.cpp\
+			Map.cpp
 OBJ_FILES	:= $(patsubst %.cpp,%.o,$(SRC_FILES))
 HDR_FILES	:= aoc.hpp\
-			Card.hpp
+			Range.hpp
 
 SRC_DIR		:= ./source/
 OBJ_DIR		:= ./object/
 HDR_DIR		:= ./include/
 
 CXX			:= g++
-CXXFLAGS	+= -std=c++17 -O0 -Wall -Wextra -Werror -I$(HDR_DIR) -g -fsanitize=address
+CXXFLAGS	+= -std=c++17 -Wall -Wextra -Werror -I$(HDR_DIR) -g -fsanitize=address
 DEPFLAGS	:= -MMD $(@.o=.d) -MP
 DEP_FILES	:= $(patsubst %.o,%.d,$(addprefix $(OBJ_DIR), $(OBJ_FILES)))
 
