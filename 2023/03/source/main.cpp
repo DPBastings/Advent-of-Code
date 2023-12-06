@@ -1,19 +1,29 @@
 #include "aoc.hpp"
 #include "Number.hpp"
 
+#include <algorithm>
 #include <cstddef>
-#include <stdexcept>
+#include <iostream>
 #include <string>
-#include <utility>
 
-static int		solve1(Data const&);
-static size_t	solve2(Data const&);
+static int	solve1(Data const&);
+static int	solve2(Data const&);
+
+template<typename T>
+std::ostream&
+operator<<(std::ostream& os, std::vector<T> const& vec) {
+	for (T const& item: vec)
+		os << item << ", ";
+	return (os);
+}
 
 int
 main(int argc, char** argv) {
 	if (argc != 2)
 		return (EXIT_FAILURE);
 	Data const	data = read_input(argv[1]);
+	// std::cout << data.numbers << '\n';
+	// std::cout << data.symbols << '\n';
 	std::cout << "Solution 1: " << solve1(data) << '\n';
 	std::cout << "Solution 2: " << solve2(data) << std::endl;
 	return (EXIT_SUCCESS);
@@ -22,23 +32,22 @@ main(int argc, char** argv) {
 static int
 solve1(Data const& data) {
 	int	result = 0;
-	
+
+	for (Number const& num: data.numbers) {
+		if (num.is_partnum(data.symbols)) {
+			std::cout << num.value() << ' ';
+			result += num.value();
+		}
+	}
+	std::cout << '\n';
 	return (result);
 }
 
-static size_t
+static int
 solve2(Data const& data) {
-	std::vector<size_t>	counts(data.size(), 1);
+	int	result = 0;
 
-	for (auto const& card: data) {
-		int const	value = card.count_winners();
-		for (size_t next = card.id() + 1; next <= card.id() + value; ++next) {
-			try {
-				counts.at(next - 1) += counts.at(card.id() - 1);
-			} catch (std::out_of_range&) {
-				continue;
-			}
-		}
-	}
-	return (vector_sum(counts));
+	for (Symbol const& sym: data.symbols)
+		result += sym.gear_ratio(data.numbers);
+	return (result);
 }

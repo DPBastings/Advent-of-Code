@@ -1,12 +1,15 @@
 #ifndef AOC_HPP
 # define AOC_HPP
 
+# include "Number.hpp"
+# include "Symbol.hpp"
+
 # include <string>
 # include <vector>
 
 struct Data {
 	std::vector<Number>	numbers;
-	std::vector<Point>	symbols;
+	std::vector<Symbol>	symbols;
 };
 
 Data	read_input(char const*);

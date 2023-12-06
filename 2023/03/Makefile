@@ -3,10 +3,12 @@ NAME 		:= bin
 SRC_FILES	:= main.cpp\
 			Number.cpp\
 			Point.cpp\
+			Symbol.cpp\
 			parse.cpp
 OBJ_FILES	:= $(patsubst %.cpp,%.o,$(SRC_FILES))
 HDR_FILES	:= aoc.hpp\
 			Number.hpp\
+			Symbol.hpp\
 			Point.hpp
 
 SRC_DIR		:= ./source/

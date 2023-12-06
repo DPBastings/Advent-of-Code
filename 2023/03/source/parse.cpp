@@ -5,7 +5,9 @@
 #include <string>
 #include <sstream>
 
-static void	parse_input(std::ifstream&, Data&);
+static void		parse_input(std::ifstream&, Data&);
+static Number	parse_number(std::string const&, size_t&, size_t);
+static Symbol	parse_symbol(std::string const&, size_t&, size_t);
 
 Data
 read_input(char const* fname) {
@@ -26,17 +28,35 @@ parse_input(std::ifstream& file, Data& data) {
 	size_t		y = 0;
 
 	while (std::getline(file, line)) {
-		for (size_t x = 0; x < line.length(), ++x) {
-			if (line[x] == '.')
+		size_t	x = 0;
+		while (x < line.length()) {
+			if (std::isdigit(line[x]))
+				data.numbers.push_back(parse_number(line, x, y));
+			else if (line[x] != '.')
+				data.symbols.push_back(parse_symbol(line, x, y));
+			else
 				++x;
-			else if (std::isdigit(line[x])) {
-				size_t	len = 1;
-				while (std::isdigit(line[x + len]))
-					len++;
-				long	num = std::stol(std::substr(line, x, len));
-				data.numbers.push_back(Number(num, Point(x, y), len));
-				x += len;
-			}
+		}
 		++y;
 	}
+}
+
+static Number
+parse_number(std::string const& line, size_t& x, size_t y) {
+	long			value = 0;
+	Number::Points	positions;
+	while (std::isdigit(line[x])) {
+		value = value * 10 + line[x] - '0';
+		positions.push_back(Point(x, y));
+		++x;
+	}
+	return (Number(value, positions));
+}
+
+static Symbol
+parse_symbol(std::string const& line, size_t& x, size_t y) {
+	char	value = line[x];
+	Point	pt(x, y);
+	++x;
+	return (Symbol(value, pt));
 }
