@@ -10,7 +10,7 @@ Hand::Hand(std::array<Card, 5> cards, int bid):
 bool
 Hand::operator<(Hand const& that) const {
 	Type const	this_type = type();
-	Type const	that_type = type();
+	Type const	that_type = that.type();
 	int const	rank_comparison = compare_rank(that);
 
 	return (this_type < that_type
@@ -20,10 +20,10 @@ Hand::operator<(Hand const& that) const {
 bool
 Hand::operator>(Hand const& that) const {
 	Type const	this_type = type();
-	Type const	that_type = type();
+	Type const	that_type = that.type();
 	int const	rank_comparison = compare_rank(that);
 
-	return (this_type > that_type
+	return (this_type < that_type
 			|| (this_type == that_type && rank_comparison == 1));
 }
 
@@ -75,9 +75,9 @@ int
 Hand::compare_rank(Hand const& that) const {
 	for (size_t i = 0; i < this->size(); ++i) {
 		if ((*this)[i] < that[i])
-			return (-1);
-		if ((*this)[i] > that[i])
 			return (1);
+		if ((*this)[i] > that[i])
+			return (-1);
 	}
 	return (0);
 }

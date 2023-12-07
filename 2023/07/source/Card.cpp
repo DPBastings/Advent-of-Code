@@ -46,7 +46,7 @@ Card::operator std::string() const {
 int
 Card::strength() const {
 	int	result = 0;
-	for (char const& tested: _possible_labels) {
+	for (char const& tested: possible_labels) {
 		if (tested == _label)
 			return (result);
 		++result;

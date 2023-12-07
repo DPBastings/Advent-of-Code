@@ -20,11 +20,10 @@ public:
 
 	int	strength() const;
 
-private:
-	static constexpr std::array<char, 13>	_possible_labels = {
-		'2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'
-	};
+	static std::array<char, 13>	possible_labels;
+	static bool					uses_jokers;
 
+private:
 	char	_label;
 }; // class Card
 
